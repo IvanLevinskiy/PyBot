@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime
 import requests
 import calendar 
+from bOrder import bOrder
 import telebot
 
 class bCoin:
@@ -9,8 +10,10 @@ class bCoin:
     #Первый скан
     first_scan = True
 
+    order = None
+
     # Конструктор
-    def __init__(self, symbolName = '', timeFrame  = '60'):
+    def __init__(self,  symbolName = '', timeFrame  = '60', telegrammBot = None):
         
         #Имя монеты (нпр BTCUSDT)
         self.SymbolName = symbolName
@@ -30,7 +33,11 @@ class bCoin:
         #Таймфрейм, мин
         self.TimeFrame = timeFrame
 
+        #Разница в стоимости
         self.delta_price = 0.0
+
+        #Экземпляр телеграмм бота
+        self.telegrammBot = telegrammBot
 
         #Период для вычисления RSI
         self.RsiPeriod = 14
@@ -95,11 +102,18 @@ class bCoin:
 
             #Формирование сигнала на продажу монеты
             if self.OldRsi > 70 and self.CurrentRsi < 70:
-                ret_value ='Пара: ' + self.SymbolName + '\n' + 'Стоимость: ' + str(self.CurrentPrice) + '\n' + 'RSI: ' + str(self.CurrentRsi) + '\n' + 'Таймфрейм: ' + str(self.TimeFrame) + '\n' + 'Сигнал для продажи'
+
+                if order != None:
+                    order.Close(self.CurrentPrice)
+                    order = None
+                #ret_value ='Пара: ' + self.SymbolName + '\n' + 'Стоимость: ' + str(self.CurrentPrice) + '\n' + 'RSI: ' + str(self.CurrentRsi) + '\n' + 'Таймфрейм: ' + str(self.TimeFrame) + '\n' + 'Сигнал для продажи'
+
 
             #Формирование сигнала на покупку монеты
             if self.OldRsi < 30 and self.CurrentRsi > 30:
-                ret_value = ' Пара: ' + self.SymbolName + '\n' + 'Стоимость: ' + str(self.CurrentPrice) + '\n' + 'RSI: ' + str(self.CurrentRsi) + '\n' + 'Таймфрейм: ' + str(self.TimeFrame) + '\n' + 'Сигнал для покупки'
+                
+                order = bOrder.bOrder(self.telegrammBot, self, self.CurrentPrice)
+                #ret_value = ' Пара: ' + self.SymbolName + '\n' + 'Стоимость: ' + str(self.CurrentPrice) + '\n' + 'RSI: ' + str(self.CurrentRsi) + '\n' + 'Таймфрейм: ' + str(self.TimeFrame) + '\n' + 'Сигнал для покупки'
            
 
             #Вывод информации в консоль
